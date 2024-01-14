@@ -12,7 +12,10 @@ class MyPromise {
             asyncFunction(this.myPromiseResolveFunc, this.myPromiseRejectFunc)
         } catch (error) {
             this.#error = error
-            this.catch()
+            if (this.#onCatch) {
+
+                this.catch()
+            }
         }
     }
     // creating private fields so a user can't just assign these outside this class definition.
@@ -20,6 +23,7 @@ class MyPromise {
     #error
     #onFulfilled
     #onRejected
+    #onCatch
     #resolvedValue
     #rejectedValue
     
@@ -76,9 +80,12 @@ class MyPromise {
         return this
     }
 
-    catch(onError) {
-        if (onError) {
-            onError(this.#error)
+    catch(onCatch) {
+        // Either this catch is going to be called now (if there's already an error) or 
+        // later via the try/catch block in the constructor, similar to how .then() is working
+        this.#onCatch = onCatch
+        if (this.#error) {
+            onCatch(this.#error)
         }
     }
 }
