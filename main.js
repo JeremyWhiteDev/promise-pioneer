@@ -12,9 +12,9 @@ class MyPromise {
             asyncFunction(this.myPromiseResolveFunc, this.myPromiseRejectFunc)
         } catch (error) {
             this.#error = error
+            //This block is being hit either before or after a .catch() callback has been added.
             if (this.#onCatch) {
-
-                this.catch()
+                this.catch(this.#onCatch)
             }
         }
     }
@@ -27,7 +27,7 @@ class MyPromise {
     #resolvedValue
     #rejectedValue
     
-    // his is called either by the passed in asyncFunction or the instance .then().\
+    // This is called either by the passed in asyncFunction or the instance .then().\
     // There's a possiblity this will be called before a .then()
     // has assigned the onFulfilled func
     /**
@@ -38,12 +38,13 @@ class MyPromise {
     myPromiseResolveFunc = (resolveValue) => {
         
         // We need to manage the state of the instance, because it is possible
-        // that a .then() callback has been passed "after" the initial asyncFunction has already completed.
-        // If that's the case, then within the .then(), we'll check if for resolved, then immediately call the provided callback
+        // that a .then() callbacks have been added "after" the initial asyncFunction has already completed.
+        // If that's the case, then within the .then(), we'll check if resolved, then immediately call the provided callback
         this.#status = 'resolved' 
         this.#resolvedValue = resolveValue
         
-        // check if a #onFulfilled has been provided .then() has been 
+        // check if a #onFulfilled has been provided and saved to this object via the .then(),
+        // if it has been, we should call it now
         if (this.#onFulfilled) {
             this.#onFulfilled(resolveValue)
         }
@@ -57,6 +58,8 @@ class MyPromise {
         // set these callbacks so they can be called from the asyncFunction when it completes
         this.#rejectedValue = rejectedValue
 
+        // check if a #onRejected has been provided and saved to this object via the .then(),
+        // if it has been, we should call it now
         if (this.#onRejected) {
             this.#onRejected(rejectedValue)
         }
@@ -77,7 +80,7 @@ class MyPromise {
             onRejected(this.#rejectedValue)
         }
 
-        return this
+        return this // TODO this should return a NEW promise so we can chain promises.
     }
 
     catch(onCatch) {
